@@ -44,6 +44,29 @@ def WingiesOrNot():
         return jsonify(result)
     except Exception as e:
         return jsonify({"not in same wing": str(e)}), 400
+    
+def find_roommates(roll_number):
+    student = excel_data[excel_data['i'] == roll_number]
+    if not student.empty:
+        roommates = excel_data[(excel_data['w'] == student['w'].iloc[0]) & (excel_data['i'] != roll_number)]
+        return roommates.to_dict(orient='records')
+    return None
+
+
+@app.route('/api/students', methods=['GET'])
+def get_students():
+    return jsonify(excel_data.to_dict(orient='records'))
+
+@app.route('/api/find_roommates', methods=['GET'])
+def get_roommates():
+    try:
+        roll_number = int(request.args.get('roll_number'))
+        roommates = find_roommates(roll_number)
+        if roommates:
+            return jsonify({"roommates": roommates})
+        return jsonify({"message": f"No roommates found for roll number {roll_number}"}), 404
+    except ValueError:
+        return jsonify({"error": "Invalid roll number"}), 400    
 
 if __name__ == '__main__':
     app.run(debug=True)
